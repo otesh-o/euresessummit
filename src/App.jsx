@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { FaArrowRight, FaBars, FaTimes, FaWhatsapp } from "react-icons/fa";
+import SummitSection from "./components/SummitSection";
+
 import "./App.css";
 
 const navItems = [
   { label: "Community", href: "#community" },
+  { label: "Summit", href: "#events" },
   { label: "About", href: "#about" },
 ];
 
@@ -229,6 +232,7 @@ function App() {
           </div>
         </section>
 
+        <SummitSection />
 
       </main>
 

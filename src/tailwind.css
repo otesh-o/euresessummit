@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Preflight is disabled, so nothing resets element defaults. Every new page
+ * marks its root with .tw-scope to get border-box sizing back for the page
+ * subtree (index.css does the same globally, but a page must not depend on
+ * that file staying as-is).
+ */
+.tw-scope,
+.tw-scope *,
+.tw-scope *::before,
+.tw-scope *::after {
+  box-sizing: border-box;
+}

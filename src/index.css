@@ -28,3 +28,100 @@ button {
 #root {
   min-height: 100vh;
 }
+
+.marquee-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-right 24s linear infinite;
+}
+
+/* Hold the supporters strip still while it is being read or pointed at. */
+.marquee-viewport:hover .marquee-track,
+.marquee-viewport:focus-within .marquee-track {
+  animation-play-state: paused;
+}
+
+.marquee-group {
+  display: flex;
+  flex: none;
+  gap: 9px;
+}
+
+.marquee-logo {
+  display: flex;
+  flex: 0 0 clamp(135px, 18vw, 190px);
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: rgba(229, 225, 217, 0.55);
+  color: #5c5b58;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  filter: grayscale(1);
+}
+
+.marquee-logo span {
+  display: inline-block;
+}
+
+.marquee-track > .marquee-group[aria-hidden="true"] .marquee-logo {
+  user-select: none;
+}
+
+@keyframes marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Entrance + loading keyframes for the registration form (see RegisterPage). */
+@keyframes ec-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ec-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Soft tick used by the summit countdown's seconds cell. */
+@keyframes ec-tick {
+  from {
+    opacity: 0.5;
+    transform: translateY(-2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+    transform: none;
+  }
+}
