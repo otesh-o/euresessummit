@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaSpinner, FaTrash } from "react-icons/fa";
+import { FaCheck, FaSearch, FaSpinner, FaTrash, FaUserCheck, FaUsers } from "react-icons/fa";
 
 import PageHeader from "../components/PageHeader";
-
 import {
   AUTH_TOKEN_KEY,
   checkInParticipant,
@@ -12,14 +11,13 @@ import {
   setParticipantPresent,
 } from "../lib/api";
 
-const filters = ["All", "Visitors", "Speakers", "Present", "Not present"];
+const filters = ["All", "Students", "Visitors", "Speakers", "Present", "Not present"];
 
-// Preflight is off, so controls keep the browser's own font, border and
-// background. Every control below opts out explicitly.
+const isStudent = (person) => String(person.profession || "").includes("[Student]");
+
 const controlReset = "appearance-none border-0 bg-transparent font-[inherit]";
 const focusRing =
-  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#111] focus-visible:outline-offset-2";
-// Replaces the .ec-fade rule from the deleted focus.css.
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2";
 const fade =
   "transition-[color,background-color,opacity,transform,border-color,box-shadow] duration-[180ms] ease-in-out motion-reduce:transition-none";
 const smooth = "transition-all duration-300 ease-in-out motion-reduce:transition-none";
@@ -27,49 +25,39 @@ const spin = "animate-[ec-spin_.7s_linear_infinite] motion-reduce:animate-none";
 const riseIn =
   "animate-[ec-rise_.4s_cubic-bezier(.22,1,.36,1)_both] motion-reduce:animate-none";
 
-const pill = `px-[17px] py-[9px] rounded-full border border-[#dedbd4] text-[13px] whitespace-nowrap cursor-pointer select-none enabled:hover:bg-[#ebe7df] enabled:hover:border-[#c9c3b7] enabled:active:scale-[.97] disabled:opacity-70 disabled:cursor-not-allowed ${controlReset} ${focusRing} ${fade}`;
-// Label for the search box stays in the accessibility tree without changing the layout.
+const pill = `px-4 py-2 rounded-full border border-zinc-800 text-[13px] whitespace-nowrap cursor-pointer select-none text-zinc-300 hover:text-white hover:bg-zinc-800 hover:border-zinc-700 active:scale-[.97] disabled:opacity-50 disabled:cursor-not-allowed ${controlReset} ${focusRing} ${fade}`;
 const visuallyHidden =
   "absolute w-px h-px -m-px p-0 overflow-hidden [clip-path:inset(50%)] whitespace-nowrap border-0";
-const muted = "mt-[10px] mb-0 text-[13px] text-[#9c2929]";
-const feedback = "mt-[10px] mb-0 text-[13px] text-[#58534d]";
-// `pill` carries arbitrary padding (`px-[17px] py-[9px]`), and Tailwind emits
-// arbitrary values *after* named ones in the same utility — so any plain
-// `px-*`/`py-*` appended below would silently lose and render at full pill
-// padding. These overrides are flagged important to actually win.
-const cellButton = `${pill} w-[130px] !py-2 !px-3 disabled:opacity-70`;
+const muted = "mt-2 mb-0 text-[13px] text-red-400";
+const feedback = "mt-2 mb-0 text-[13px] text-emerald-400";
+
+const cellButton = `${pill} w-[130px] !py-1.5 !px-3 disabled:opacity-50`;
 const confirmBox =
-  "flex flex-wrap items-center gap-2 text-[13px] rounded-[10px] border border-[#e0ddd6] bg-white/[.55] px-[9px] py-[6px]";
-// Same box, tinted to read as destructive. Flagged important for the same
-// reason as the button hovers: two arbitrary values of one property otherwise
-// resolve by stylesheet order.
-const confirmBoxDanger = `${confirmBox} !border-[#e5c3c3] !bg-[rgba(156,41,41,.05)]`;
-const confirmButton = `${pill} !py-[7px] !px-[11px] text-[12px]`;
-// `pill` already owns a hover background, and which of two `hover:bg-*`
-// utilities wins would otherwise depend on Tailwind's arbitrary-value sort
-// order. The destructive tones are flagged important so they always win.
+  "flex flex-wrap items-center gap-2 text-[13px] rounded-2xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-200";
+const confirmBoxDanger = `${confirmBox} !border-red-900/60 !bg-red-950/40`;
+const confirmButton = `${pill} !py-1 !px-2.5 text-[12px]`;
+
 const solidButton =
-  "!bg-black text-white hover:!bg-black hover:!border-black border-black";
+  "!bg-white !text-zinc-950 font-bold hover:!bg-zinc-200 hover:!border-white border-white";
 const dangerButton =
-  "text-[#9c2929] hover:!bg-[rgba(156,41,41,.09)] hover:!border-[#d9a7a7]";
+  "text-red-400 hover:!bg-red-950/40 hover:!border-red-900/60";
 const dangerSolid =
-  "bg-[#9c2929] text-white border-[#9c2929] hover:!bg-[#7d1f1f] hover:!border-[#7d1f1f]";
-const trashButton = `${pill} w-[38px] !px-0 flex-none ${dangerButton}`;
+  "!bg-red-600 text-white !border-red-600 hover:!bg-red-700";
+const trashButton = `${pill} w-[36px] h-[36px] !p-0 flex items-center justify-center flex-none ${dangerButton}`;
 const skeleton =
-  "block h-[13px] rounded-full bg-[#e6e2da] animate-pulse motion-reduce:animate-none";
-// Every panel on the page shares one edge colour and radius so the grid of
-// cards reads as a set.
-const card = "rounded-[18px] border border-[#e0ddd6]";
-// Rows carry a bottom rule except the last, which would otherwise sit one pixel
-// above the table's own border and read as a doubled line.
-const cellBase = "border border-black px-[14px] py-[13px] align-middle";
-const cellRule = "border border-black";
+  "block h-[13px] rounded-full bg-zinc-800 animate-pulse motion-reduce:animate-none";
+const card = "rounded-[28px] border border-zinc-800/90 bg-zinc-900/40 backdrop-blur-xl shadow-xl";
+const cellBase = "px-4 py-3.5 align-middle text-zinc-200 border-b border-zinc-800/70";
 
 const matchesQuery = (person, query) => {
   const needle = String(query).trim().toLowerCase();
+  if (!needle) return true;
   return (
-    person.serial.toLowerCase() === needle ||
-    person.name.toLowerCase() === needle
+    (person.serial && person.serial.toLowerCase().includes(needle)) ||
+    (person.name && person.name.toLowerCase().includes(needle)) ||
+    (person.email && person.email.toLowerCase().includes(needle)) ||
+    (person.phone && person.phone.toLowerCase().includes(needle)) ||
+    (person.profession && person.profession.toLowerCase().includes(needle))
   );
 };
 
@@ -99,7 +87,7 @@ export default function AdminPage() {
       setLoading(false);
       return;
     }
-    setLoadError("Could not load participants.");
+    setLoadError("Could not load participants from the database.");
     setLoading(false);
   }, []);
 
@@ -112,10 +100,6 @@ export default function AdminPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Deleting a row removes the element that currently holds focus. Wait for the
-  // next render, then hand focus to the row that slid into its place so the
-  // keyboard user never gets dropped back on <body>.
-  // `undefined` = nothing pending, `null` = that row is gone, use the search box.
   useEffect(() => {
     if (pendingFocus === undefined) return;
     const row = pendingFocus === null ? null : rowRefs.current[pendingFocus];
@@ -128,9 +112,10 @@ export default function AdminPage() {
     return people.filter((person) => {
       const textMatch =
         !needle ||
-        `${person.name} ${person.phone}`.toLowerCase().includes(needle);
+        `${person.name} ${person.phone} ${person.serial}`.toLowerCase().includes(needle);
       const filterMatch =
         filter === "All" ||
+        (filter === "Students" && isStudent(person)) ||
         (filter === "Visitors" && person.role === "Visitor") ||
         (filter === "Speakers" && person.role === "Speaker") ||
         (filter === "Present" && person.present) ||
@@ -162,7 +147,6 @@ export default function AdminPage() {
 
   const requestDelete = (person) => {
     if (busyId !== null) return;
-    // One inline confirmation at a time; opening one closes the other.
     setConfirmId(null);
     setDeleteId(person.id);
   };
@@ -211,7 +195,7 @@ export default function AdminPage() {
     if (!query) {
       setCheckIn({
         status: "error",
-        message: "Enter a serial number or a name first.",
+        message: "Enter a serial number, email, or name first.",
       });
       return;
     }
@@ -222,7 +206,7 @@ export default function AdminPage() {
     if (!result?.ok) {
       setCheckIn({
         status: "error",
-        message: result?.error || "No match found",
+        message: result?.error || "No matching attendee found.",
       });
       return;
     }
@@ -233,8 +217,8 @@ export default function AdminPage() {
     setCheckIn({
       status: "ok",
       message: matched
-        ? `${matched.name} (${matched.serial}) is checked in.`
-        : "Checked in.",
+        ? `Checked in: ${matched.name} (${matched.serial})`
+        : "Checked in successfully.",
     });
   };
 
@@ -243,7 +227,7 @@ export default function AdminPage() {
     try {
       sessionStorage.removeItem(AUTH_TOKEN_KEY);
     } catch {
-      // Storage blocked: navigate regardless so the user leaves the dashboard.
+      // ignore
     }
     setConfirmId(null);
     setDeleteId(null);
@@ -253,44 +237,84 @@ export default function AdminPage() {
   const checkingIn = checkIn.status === "pending";
 
   return (
-    <div className="tw-scope min-h-screen text-[#111] [font-family:'DM_Sans',sans-serif] bg-[#f7f4ef]">
+    <div className="tw-scope min-h-screen text-zinc-100 [font-family:'DM_Sans',sans-serif] bg-[#0c0e12]">
+      {/* Subtle Background glow */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.03),transparent_60%)]"
+      />
+
       <PageHeader
         action="Log out"
         href="/admin/login"
         onAction={handleLogout}
+        dark={true}
       />
-      <main className="max-w-[1120px] mx-auto mt-[22px] mb-[60px] px-7">
-        <h1 className="mt-5 mb-3 text-[34px] tracking-[-.04em]">
-          Participants
-        </h1>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-[18px] mb-[18px]">
+
+      <main className="relative z-10 max-w-[1120px] mx-auto mt-6 mb-16 px-4 sm:px-7">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[11px] font-semibold text-zinc-300 uppercase tracking-wider mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              Admin Portal
+            </div>
+            <h1 className="text-[30px] font-bold tracking-tight text-white mb-1">
+              Summit Participants
+            </h1>
+            <p className="text-sm text-zinc-400">
+              Manage registrations, attendee check-ins, and serial verification.
+            </p>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
-            ["Total registered", people.length],
-            ["Checked in", people.filter((person) => person.present).length],
-            [
-              "Speakers",
-              people.filter((person) => person.role === "Speaker").length,
-            ],
-          ].map(([title, n]) => (
+            {
+              title: "Total Registered",
+              count: people.length,
+              icon: <FaUsers className="text-zinc-500" />,
+            },
+            {
+              title: "Students",
+              count: people.filter(isStudent).length,
+              icon: <span className="text-xs px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-semibold border border-zinc-700/60">STU</span>,
+            },
+            {
+              title: "Checked In (Present)",
+              count: people.filter((p) => p.present).length,
+              icon: <FaUserCheck className="text-emerald-400" />,
+            },
+            {
+              title: "Speakers Registered",
+              count: people.filter((p) => p.role === "Speaker").length,
+              icon: <span className="text-xs px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-semibold border border-zinc-700/60">VIP</span>,
+            },
+          ].map((stat) => (
             <article
-              key={title}
-              className={`px-[22px] py-[18px] rounded-[17px] border border-[#e0ddd6] ${smooth} hover:-translate-y-0.5 hover:border-[#d2cdc3] hover:shadow-[0_12px_28px_rgba(20,18,15,.07)] motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none`}
+              key={stat.title}
+              className={`${card} p-6 ${smooth} hover:border-zinc-700 hover:-translate-y-0.5`}
             >
-              <div className="text-[14px] text-[#5c5750]">{title}</div>
-              <strong className="block mt-2 text-[31px] tabular-nums">{n}</strong>
+              <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                <span>{stat.title}</span>
+                {stat.icon}
+              </div>
+              <strong className="block mt-2 text-[32px] font-bold text-white tabular-nums">
+                {stat.count}
+              </strong>
             </article>
           ))}
         </div>
-        <section
-          className={`${card} pt-[17px] px-5 pb-5 mb-[25px] ${smooth} hover:border-[#d2cdc3] hover:shadow-[0_12px_28px_rgba(20,18,15,.06)] motion-reduce:hover:shadow-none`}
-        >
+
+        {/* Quick Check-in Section */}
+        <section className={`${card} p-6 mb-6 ${smooth}`}>
           <label
             htmlFor="check-in-query"
-            className="block mb-2.5 text-[15px] font-bold"
+            className="block mb-2 text-[14px] font-bold text-white"
           >
-            Check in by serial number
+            Quick Check-in
           </label>
-          <form onSubmit={handleCheckIn} className="flex gap-3">
+          <form onSubmit={handleCheckIn} className="flex flex-col sm:flex-row gap-3">
             <input
               id="check-in-query"
               name="check-in-query"
@@ -299,26 +323,22 @@ export default function AdminPage() {
                 setSerial(event.target.value);
                 setCheckIn({ status: "idle", message: "" });
               }}
-              placeholder="Serial number or name"
+              placeholder="e.g. EC0001, email address, or name"
               autoComplete="off"
-              aria-describedby={
-                checkIn.message ? "check-in-feedback" : undefined
-              }
-              className={`flex-1 min-w-0 px-[15px] py-3 rounded-[13px] border border-[#dedbd4] placeholder:text-[#9a948b] hover:border-[#b9b2a7] focus:border-[#8f887e] active:border-[#8f887e] ${controlReset} ${focusRing} ${fade} text-[14px] text-[#111]`}
+              className={`flex-1 min-w-0 px-4 py-3 rounded-2xl border border-zinc-800 bg-zinc-950/80 text-white placeholder:text-zinc-500 hover:border-zinc-700 focus:border-zinc-400 ${controlReset} ${focusRing} ${fade} text-[14px]`}
             />
             <button
               type="submit"
               disabled={checkingIn}
-              aria-busy={checkingIn}
-              className={`${pill} ${solidButton} min-w-[145px] flex-none`}
+              className={`${pill} ${solidButton} min-w-[130px] h-[48px] flex items-center justify-center`}
             >
               {checkingIn ? (
                 <>
-                  <FaSpinner aria-hidden="true" className={spin} />
-                  Checking in…
+                  <FaSpinner aria-hidden="true" className={`${spin} mr-2`} />
+                  Checking…
                 </>
               ) : (
-                "Check in"
+                "Check In"
               )}
             </button>
           </form>
@@ -334,27 +354,25 @@ export default function AdminPage() {
             </p>
           )}
         </section>
+
+        {/* Search & Filter Bar */}
         <div
-          className={`${card} flex flex-wrap items-center gap-2.5 px-5 py-[14px] mb-[17px] ${smooth} hover:border-[#d2cdc3] hover:shadow-[0_12px_28px_rgba(20,18,15,.06)] motion-reduce:hover:shadow-none`}
+          className={`${card} flex flex-wrap items-center justify-between gap-3 p-4 mb-5`}
         >
-          <label htmlFor="participant-search" className={visuallyHidden}>
-            Search by name or phone number
-          </label>
-          <input
-            ref={searchRef}
-            id="participant-search"
-            name="participant-search"
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="⌕  Search by name or phone number..."
-            className={`w-[min(100%,290px)] px-[14px] py-2.5 rounded-full border border-[#dedbd4] placeholder:text-[#9a948b] hover:border-[#b9b2a7] focus:border-[#8f887e] active:border-[#8f887e] ${controlReset} ${focusRing} ${fade} text-[13px] text-[#111]`}
-          />
-          <div
-            role="group"
-            aria-label="Filter participants"
-            className="flex flex-wrap gap-2.5"
-          >
+          <div className="relative w-full sm:w-[300px]">
+            <FaSearch className="absolute left-3.5 top-3.5 text-zinc-500 text-xs" />
+            <input
+              ref={searchRef}
+              id="participant-search"
+              name="participant-search"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Filter by name, serial, phone…"
+              className={`w-full pl-9 pr-4 py-2 rounded-2xl border border-zinc-800 bg-zinc-950/80 text-white placeholder:text-zinc-500 hover:border-zinc-700 focus:border-zinc-400 ${controlReset} ${focusRing} ${fade} text-[13px]`}
+            />
+          </div>
+          <div role="group" aria-label="Filter participants" className="flex flex-wrap gap-2">
             {filters.map((item) => (
               <button
                 key={item}
@@ -362,127 +380,115 @@ export default function AdminPage() {
                 aria-pressed={filter === item}
                 onClick={() => setFilter(item)}
                 className={`${pill} ${
-                  filter === item ? solidButton : "text-[#222]"
+                  filter === item
+                    ? "!bg-white !text-zinc-950 !border-white font-bold"
+                    : "text-zinc-400 bg-zinc-950/50"
                 }`}
               >
                 {item}
               </button>
             ))}
           </div>
-          <p aria-live="polite" className={visuallyHidden}>
-            {loading
-              ? "Loading participants"
-              : `${shown.length} of ${people.length} participants shown`}
-          </p>
         </div>
+
         {loadError && (
           <div
             role="alert"
-            className={`mb-[17px] px-4 py-[13px] rounded-[12px] border border-[#e2c2c2] bg-[rgba(156,41,41,.06)] text-[14px] text-[#9c2929] ${riseIn}`}
+            className={`mb-5 px-4 py-3 rounded-2xl border border-red-900/60 bg-red-950/40 text-sm text-red-300 flex items-center justify-between ${riseIn}`}
           >
-            <span>{loadError}</span>{" "}
+            <span>{loadError}</span>
             <button
               type="button"
               onClick={load}
-              className={`${pill} py-[6px] px-3 ml-2`}
+              className={`${pill} py-1 px-3 text-xs`}
             >
               Retry
             </button>
           </div>
         )}
-<div
-           className={`${card} overflow-x-auto border-2 border-black ${smooth} hover:border-black hover:shadow-[0_12px_28px_rgba(20,18,15,.06)] motion-reduce:hover:shadow-none`}
-         >
-           <table className="w-full border border-black text-left text-[13px]">
-            <caption className={visuallyHidden}>
-              Registered participants and their check-in status
-            </caption>
+
+        {/* Participants Table */}
+        <div className={`${card} overflow-x-auto`}>
+          <table className="w-full text-left text-[13px] border-collapse">
             <thead>
-<tr>
-                 {["Serial No.", "Name", "Phone number", "Present", "Actions"].map(
-                   (h) => (
-                     <th
-                       key={h}
-                       scope="col"
-                       className="border border-black px-[14px] py-3 text-[#49453f]"
-                     >
-                       {h}
-                     </th>
-                   ),
-                 )}
-               </tr>
+              <tr className="border-b border-zinc-800 bg-zinc-950/60 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                {["Serial No.", "Name & Role", "Phone", "Status", "Actions"].map((h) => (
+                  <th key={h} scope="col" className="px-4 py-3.5">
+                    {h}
+                  </th>
+                ))}
+              </tr>
             </thead>
             <tbody>
               {loading &&
-                Array.from({ length: 5 }, (_, index) => (
-                  <tr key={`skeleton-${index}`}>
-                    <td className={`${cellBase} ${cellRule}`}>
-                      <span className={`${skeleton} w-[190px] h-[11px]`} />
+                Array.from({ length: 4 }, (_, i) => (
+                  <tr key={`skeleton-${i}`} className="border-b border-zinc-800/80">
+                    <td className={cellBase}>
+                      <span className={`${skeleton} w-20 h-4`} />
                     </td>
-                    <td className={`${cellBase} ${cellRule}`}>
-                      <span className={`${skeleton} w-[86px] mb-[7px]`} />
-                      <span className={`${skeleton} w-[190px] h-[11px]`} />
+                    <td className={cellBase}>
+                      <span className={`${skeleton} w-32 h-4 mb-1.5`} />
+                      <span className={`${skeleton} w-48 h-3`} />
                     </td>
-                    <td className={`${cellBase} ${cellRule}`}>
-                      <span className={`${skeleton} w-[112px]`} />
+                    <td className={cellBase}>
+                      <span className={`${skeleton} w-28 h-4`} />
                     </td>
-                    <td className={`px-[14px] py-[15px] ${cellRule}`}>
-                      <span
-                        className={`${skeleton} w-[130px] h-[34px] rounded-full`}
-                      />
+                    <td className={cellBase}>
+                      <span className={`${skeleton} w-24 h-8 rounded-full`} />
                     </td>
-                    <td className="px-[14px] py-[15px] align-middle">
-                      <span
-                        className={`${skeleton} w-[38px] h-[36px] rounded-full ml-auto`}
-                      />
+                    <td className={cellBase}>
+                      <span className={`${skeleton} w-8 h-8 rounded-full`} />
                     </td>
                   </tr>
                 ))}
+
               {!loading && shown.length === 0 && (
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-[14px] py-[22px] text-[#58534d]"
-                  >
-                    No participants match your search.
+                  <td colSpan={5} className="px-4 py-12 text-center text-zinc-500 text-sm">
+                    No participants match your current search or filter.
                   </td>
                 </tr>
               )}
+
               {!loading &&
-                shown.map((person, index) => {
-                  const rule = index === shown.length - 1 ? "" : cellRule;
-                  return (
-                    <tr
-                      key={person.id}
-                      className="transition-colors duration-200 ease-out hover:bg-[#f6f3ec] motion-reduce:transition-none"
-                    >
-                      <td className={`${cellBase} ${rule}`}>{person.serial}</td>
-                      <td className={`${cellBase} ${rule}`}>
-                        <strong className="text-[14px]">{person.name}</strong>
-                        <div className="mt-[5px] text-[13px] text-[#58534d]">
-                          <span className="py-1 px-[9px] rounded-full mr-[9px] bg-[#ebe7df]">
-                            {person.role}
-                          </span>
-                          {person.profession}
-                        </div>
-                      </td>
-                      <td className={`${cellBase} ${rule}`}>{person.phone}</td>
-                      <td className={`px-[14px] py-2.5 ${rule}`}>
-                      {confirmId === person.id ? (
-                        <div
-                          className={confirmBox}
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") cancelUndo(person);
-                          }}
+                shown.map((person) => (
+                  <tr
+                    key={person.id}
+                    className="transition-colors hover:bg-zinc-800/40 group"
+                  >
+                    <td className={`${cellBase} font-mono font-bold text-white tracking-wide`}>
+                      {person.serial}
+                    </td>
+                    <td className={cellBase}>
+                      <div className="font-semibold text-white text-[14px]">
+                        {person.name}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-zinc-400">
+                        <span
+                          className={`px-2 py-0.5 rounded-md font-medium text-[11px] ${
+                            person.role === "Speaker"
+                              ? "bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                              : "bg-zinc-800 text-zinc-300"
+                          }`}
                         >
+                          {person.role}
+                        </span>
+                        <span>{person.profession}</span>
+                      </div>
+                    </td>
+                    <td className={`${cellBase} text-zinc-400`}>
+                      {person.phone}
+                    </td>
+                    <td className={cellBase}>
+                      {confirmId === person.id ? (
+                        <div className={confirmBox}>
                           <span>Undo check-in?</span>
                           <button
                             type="button"
-                            autoFocus
-                            onClick={(event) => confirmUndo(person, event)}
+                            onClick={(e) => confirmUndo(person, e)}
                             className={`${confirmButton} ${solidButton}`}
                           >
-                            Yes, undo
+                            Yes
                           </button>
                           <button
                             type="button"
@@ -499,48 +505,36 @@ export default function AdminPage() {
                           }}
                           type="button"
                           disabled={busyId === person.id}
-                          aria-busy={busyId === person.id}
                           onClick={() => handleRowButton(person)}
                           className={`${cellButton} ${
-                            person.present ? solidButton : "text-[#222]"
+                            person.present
+                              ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20"
+                              : "bg-zinc-900 text-zinc-300 hover:bg-zinc-800"
                           }`}
                         >
                           {busyId === person.id ? (
-                            <>
-                              <FaSpinner
-                                aria-hidden="true"
-                                className={`${spin} mr-[7px]`}
-                              />
-                              …
-                            </>
+                            <FaSpinner className={`${spin} inline mr-1`} />
                           ) : person.present ? (
-                            "Present ✓"
+                            <>
+                              <FaCheck className="inline mr-1.5 text-xs text-emerald-400" />
+                              Present
+                            </>
                           ) : (
-                            "Check in"
+                            "Mark Present"
                           )}
                         </button>
                       )}
                     </td>
-                    <td className={`px-[14px] py-2.5 align-middle ${rule}`}>
+                    <td className={cellBase}>
                       {deleteId === person.id ? (
-                        <div
-                          className={confirmBoxDanger}
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") cancelDelete(person);
-                          }}
-                        >
-                          <span className="text-[#9c2929]">
-                            {person.present
-                              ? "Checked in — delete?"
-                              : "Delete?"}
-                          </span>
+                        <div className={confirmBoxDanger}>
+                          <span className="text-red-300 text-xs">Delete?</span>
                           <button
                             type="button"
-                            autoFocus
-                            onClick={(event) => confirmDelete(person, event)}
+                            onClick={(e) => confirmDelete(person, e)}
                             className={`${confirmButton} ${dangerSolid}`}
                           >
-                            Yes, delete
+                            Delete
                           </button>
                           <button
                             type="button"
@@ -553,19 +547,17 @@ export default function AdminPage() {
                       ) : (
                         <button
                           type="button"
-                          disabled={busyId !== null}
-                          aria-label={`Delete ${person.name} (${person.serial})`}
-                          title="Delete participant"
+                          title="Delete attendee record"
+                          aria-label={`Delete ${person.name}`}
                           onClick={() => requestDelete(person)}
                           className={trashButton}
                         >
-                          <FaTrash aria-hidden="true" />
+                          <FaTrash className="text-xs" />
                         </button>
                       )}
                     </td>
                   </tr>
-                  );
-                })}
+                ))}
             </tbody>
           </table>
         </div>

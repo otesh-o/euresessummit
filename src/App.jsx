@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaArrowRight, FaBars, FaTimes, FaWhatsapp } from "react-icons/fa";
+import AnimatedStatement from "./components/AnimatedStatement";
 import SummitSection from "./components/SummitSection";
 
 import "./App.css";
@@ -66,6 +67,9 @@ const featureItems = [
   },
 ];
 
+const aboutStatement =
+  "The Eureses Community exists to close the gap between young Nigerians and the rest of the world in tech, engineering, science, and design. The knowledge, the exposure, the mindset — it is all here.";
+
 const joinUrl = "https://chat.whatsapp.com/G8GeWyKROokE7piDwaMlB0?mode=gi_t";
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -121,7 +125,7 @@ function App() {
               rel="noreferrer"
               className="join-chip"
             >
-              Join
+              Join Community
             </a>
 
             <button
@@ -167,7 +171,7 @@ function App() {
               The community for engineers, scientists, and technical creatives.
             </h1>
             <p className="hero-subtitle">
-              The official community of Eureses Limited.
+              Closing the gap in knowledge, exposure, and global engineering mindset.
             </p>
 
             <div className="hero-actions">
@@ -181,8 +185,8 @@ function App() {
                 Join the Community
               </a>
 
-              <a href="#about" className="button-secondary">
-                Learn More
+              <a href="/register" className="button-secondary">
+                Register for Eureses Creative Summit
                 <FaArrowRight />
               </a>
             </div>
@@ -223,12 +227,7 @@ function App() {
 
         <section className="about-section" id="about">
           <div className="about-statement">
-            <p>
-              The Eureses Community exists to close the gap between young
-              Nigerians and the rest of the world in tech, engineering,
-              science, and design. The knowledge, the exposure, the mindset —
-              it is all here.
-            </p>
+            <AnimatedStatement text={aboutStatement} />
           </div>
         </section>
 

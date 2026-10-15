@@ -46,10 +46,10 @@ export default {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: { email: fromEmail, name: "EURESE Summit" },
+          from: { email: fromEmail, name: "Eureses Summit" },
           to: [{ email: email.trim(), name: name.trim() }],
-          subject: "EURESE Summit serial number",
-          text: `Hi ${name.trim()}, your EURESE Summit serial number is ${serial.trim()}. Bring this to the hall for entry.`,
+          subject: "Eureses Summit serial number",
+          text: `Hi ${name.trim()}, your Eureses Summit serial number is ${serial.trim()}. Bring this to the hall for entry.`,
           html: `<p>Hi ${escapeHtml(name.trim())},</p><p>Your serial number is:</p><h2>${escapeHtml(serial.trim())}</h2><p>Bring this to the hall for entry.</p>`,
         }),
       });

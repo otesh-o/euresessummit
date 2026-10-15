@@ -1,473 +1,649 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-   FaArrowLeft,
-   FaArrowRight,
-   FaCalendarAlt,
-   FaClock,
-   FaLaptop,
-   FaMapMarkerAlt,
-   FaMicrophone,
-   FaPeopleArrows,
-   FaQuestion,
-   FaUser,
-} from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaPlus, FaUser } from "react-icons/fa";
 
-const SUMMIT_DATE = "2026-11-15T11:00:00Z";
-const speakers = [];
-const audiences = [
-   "Developers",
-   "Designers",
-   "Tech Creatives",
-   "Builders",
-   "Innovators",
-];
-const expectations = [
-   {
-      title: "Talks & Keynotes",
-      description: "Fresh ideas from industry leaders and rising voices.",
-      Icon: FaMicrophone,
-      image: "/assets/speaker.jpg",
-   },
-   {
-      title: "Hands-on Sessions",
-      description: "Build, create and learn by doing.",
-      Icon: FaLaptop,
-      image: "/assets/keynote.jpg",
-   },
-   {
-      title: "Innovation",
-      description:
-         "Discover the latest trends and technologies shaping the future.",
-      Icon: FaArrowRight,
-      image: "/assets/innovation.jpg",
-   },
-   {
-      title: "Networking",
-      description:
-         "Connect with people to share your idea with and people who have the same goal as you.",
-      Icon: FaPeopleArrows,
-      image: "/assets/networking.jpg",
-   },
-];
-const supporters = [
-   "TechLogo",
-   "NextGen",
-   "InnovateCo",
-   "BuildLab",
-   "GlobalTech",
+// Doors open 9:00 AM WAT (UTC+1).
+const SUMMIT_DATE = "2026-11-21T09:00:00+01:00";
+
+const keyFacts = [
+  { label: "Date", value: "21 November 2026", note: "Doors open 9:00 AM WAT" },
+  { label: "Venue", value: "Florence Bamitale Owolabi Civic Center", note: "Ikole Ekiti" },
 ];
 
+const stats = [
+  { value: 2000, suffix: "+", label: "Seats in 2026" },
+  { value: 400, suffix: "+", label: "Attendees in 2025" },
+  { value: 3, label: "Universities" },
+];
 
-const controlReset = "appearance-none border-0 bg-transparent font-[inherit]";
-const focusRing = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#111] focus-visible:outline-offset-2";
-const fade = "transition-[color,background-color,opacity,transform,border-color,box-shadow] duration-[180ms] ease-in-out motion-reduce:transition-none";
-const smooth = "transition-all duration-300 ease-in-out motion-reduce:transition-none";
-const iconNudge = "transition-transform duration-300 ease-in-out motion-reduce:transition-none group-hover:-translate-y-0.5 group-hover:scale-110";
-const arrowNudge = `${fade} group-hover:translate-x-0.5`;
-const tick = "animate-[ec-tick_.22s_ease-out_both] motion-reduce:animate-none";
-const eyebrow = "m-0 text-[11px] font-bold uppercase tracking-[.17em] text-[#514e49]";
-const chipBase = `border border-[#dedbd3] bg-white/[.12] rounded-full text-[12px] text-[#222] whitespace-nowrap ${controlReset} ${focusRing}`;
-const chip = `${chipBase} px-4 py-2 cursor-default ${smooth} hover:bg-white/[.6] hover:border-[#c9c3b7] hover:text-[#111]`;
-const chipButton = `${chipBase} w-9 h-9 p-0 flex-none cursor-pointer select-none ${fade} enabled:hover:bg-white/[.85] enabled:hover:border-[#b3ada1] enabled:hover:-translate-y-px enabled:active:translate-y-0 enabled:active:scale-90 disabled:opacity-35 disabled:cursor-not-allowed`;
-const ctaBase = `group inline-flex justify-center items-center no-underline rounded-full !bg-black text-white font-bold shadow-[0_9px_20px_rgba(20,18,15,.12)] cursor-pointer select-none hover:!bg-black hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(20,18,15,.18)] active:translate-y-0 active:scale-[.97] active:shadow-[0_5px_12px_rgba(20,18,15,.16)] motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-[0_9px_20px_rgba(20,18,15,.12)] ${controlReset} ${focusRing} ${fade}`;
-const cta = `${ctaBase} gap-[11px] px-[23px] py-[13px] text-[13px]`;
+const pillars = [
+  {
+    title: "Three talks",
+    description:
+      "Government's role in national innovation, reclaiming the innovative spirit, and technical research and the next wave of innovation. Thirty minutes each, with time for questions.",
+  },
+  {
+    title: "The panel",
+    description:
+      "Five people on stage, three of them taken from the audience. Each gets a real one-on-one conversation about what they are building and what has stopped them.",
+  },
+  {
+    title: "Guest of Honour",
+    description:
+      "The Vice Chancellor speaks on the university's role in supporting innovation and ambition among its students.",
+  },
+  {
+    title: "Networking",
+    description:
+      "Doors open at 9:00 AM for informal time to meet peers from across campuses, take pictures and settle in before the programme starts.",
+  },
+];
 
-// Four cards should span the speaker rail exactly at full width instead of
-// overflowing it by a few pixels. `48px` is the three gap-4 (1rem) gutters
-// between them, so (100% - 48px) / 4 lands each card on the rail's share.
-// The min-width keeps the rail scrollable on phones, where the percentage basis
-// alone would squeeze four cards into a single screen width.
-const speakerCardWidth = "flex-[0_0_calc((100%_-_48px)/4)] min-w-[190px]";
+const agenda = [
+  {
+    time: "9:00 AM",
+    title: "Networking",
+    detail: "Doors open. Informal time for pictures, greetings and meeting people before the programme begins.",
+    duration: "1 hr",
+    kind: "soft",
+  },
+  {
+    time: "10:00 AM",
+    title: "Official start",
+    detail: "A short opening from the convener on what the day is about, what to expect and why it matters.",
+    duration: "10 min",
+  },
+  {
+    time: "10:10 AM",
+    title: "Guest of Honour remarks",
+    detail: "The Vice Chancellor on the university's role in supporting innovation and ambition among its students.",
+    duration: "10 min",
+  },
+  {
+    time: "10:20 AM",
+    title: "Government's role in national innovation",
+    detail: "What is already being done to support innovators: real policy, real funding and government effort. Thirty-minute talk, then five minutes of questions.",
+    duration: "35 min",
+    tag: "Talk",
+  },
+  {
+    time: "10:50 AM",
+    title: "Reclaiming the innovative spirit",
+    detail: "Why Nigeria's earlier moments of global achievement did not carry forward, and the case for closing that gap now. Thirty-minute talk, then five minutes of questions.",
+    duration: "35 min",
+    tag: "Talk",
+  },
+  {
+    time: "11:30 AM",
+    title: "Technical research, support and the next wave of innovation",
+    detail: "Where research support falls short, how it becomes real technology companies, and where AI fits in. Thirty-minute talk, then five minutes of questions.",
+    duration: "35 min",
+    tag: "Talk",
+  },
+  {
+    time: "12:05 PM",
+    title: "Nexr",
+    detail: "The convener speaks on Nexr just before the break.",
+    duration: "10 min",
+  },
+  {
+    time: "12:15 PM",
+    title: "Break",
+    detail: "A short reset before the panel.",
+    duration: "5 min",
+    kind: "soft",
+  },
+  {
+    time: "12:20 PM",
+    title: "Panel discussion",
+    detail: "The convener, one panelist and three attendees from the audience. Each gets a real conversation about what they are working on or want to build, what has stopped them, and a direct response.",
+    duration: "30 min",
+    tag: "Panel",
+  },
+  {
+    time: "12:50 PM",
+    title: "Closing",
+    detail: "The convener closes the day, pointing attendees to the next step they should take, tied to what came up in the panel.",
+    duration: "10 min",
+  },
+];
+
+// Placeholder speakers. Replace the name (and photo) when the lineup is confirmed.
+const speakers = [
+  { name: "Speaker Name", role: "Guest of Honour", org: "Vice Chancellor", topic: "Remarks on the university's role in innovation" },
+  { name: "Speaker Name", role: "Government representative", org: "", topic: "Government's role in national innovation" },
+  { name: "Speaker Name", role: "Speaker", org: "", topic: "Reclaiming the innovative spirit" },
+  { name: "Speaker Name", role: "Founder or technical lead", org: "", topic: "Technical research, support and the next wave of innovation" },
+];
+
+const faqs = [
+  {
+    q: "Is attendance free?",
+    a: "Yes. Admission is free for students, lecturers, and invited guests. Register online to receive your personal admission pass with a QR code for check-in.",
+  },
+  {
+    q: "Is there transport from the FUOYE Oye campus?",
+    a: "Yes. Chartered shuttle buses run from the FUOYE Oye main campus to the Florence Bamitale Owolabi Civic Center in Ikole in the morning and return after the event. Select the shuttle option when you register so we can plan capacity.",
+  },
+  {
+    q: "Are first-years and non-engineers welcome?",
+    a: "Yes. The programme is designed for anyone interested in technology, whether you are a first-year student, a designer, a researcher, a content creator, or an aspiring founder.",
+  },
+  {
+    q: "How does the panel work?",
+    a: "The panel has five people: the convener, one panelist and three attendees taken from the audience. Each of the three gets a real one-on-one conversation on stage about what they are working on or want to build and what has stopped them, followed by a direct response. When you register, tell us what you are building so we know who is in the room.",
+  },
+];
 
 function useCountdown(date) {
-   const calculate = useCallback(() => {
-      if (!date) return ["00", "00", "00", "00"];
-      const timestamp = new Date(date).getTime();
-      if (!Number.isFinite(timestamp)) return ["00", "00", "00", "00"];
-      const remaining = Math.max(0, timestamp - Date.now());
-      return [
-         Math.floor(remaining / 86400000),
-         Math.floor((remaining % 86400000) / 3600000),
-         Math.floor((remaining % 3600000) / 60000),
-         Math.floor((remaining % 60000) / 1000),
-      ].map((value) => String(value).padStart(2, "0"));
-   }, [date]);
+  const calculate = useCallback(() => {
+    const remaining = Math.max(0, new Date(date).getTime() - Date.now());
+    return [
+      Math.floor(remaining / 86400000),
+      Math.floor((remaining % 86400000) / 3600000),
+      Math.floor((remaining % 3600000) / 60000),
+      Math.floor((remaining % 60000) / 1000),
+    ].map((value) => String(value).padStart(2, "0"));
+  }, [date]);
 
-   const [values, setValues] = useState(calculate);
-   useEffect(() => {
-      if (!date) return undefined;
-      const timer = window.setInterval(() => setValues(calculate()), 1000);
-      return () => window.clearInterval(timer);
-   }, [date, calculate]);
-   return values;
+  const [values, setValues] = useState(calculate);
+  useEffect(() => {
+    const timer = window.setInterval(() => setValues(calculate()), 1000);
+    return () => window.clearInterval(timer);
+  }, [calculate]);
+  return values;
 }
 
-// Tracks whether the speaker rail can scroll at all and which end we are at, so
-// the arrows can disable themselves instead of firing no-op clicks.
-function useCarouselEdges(track) {
-   const [edges, setEdges] = useState({
-      scrollable: false,
-      atStart: true,
-      atEnd: true,
-   });
 
-   useEffect(() => {
-      const element = track.current;
-      if (!element) return undefined;
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-      const update = () => {
-         const overflow = element.scrollWidth - element.clientWidth;
-         const scrollable = overflow > 1;
-         setEdges({
-            scrollable,
-            atStart: !scrollable || element.scrollLeft <= 1,
-            atEnd: !scrollable || element.scrollLeft >= overflow - 1,
-         });
-      };
-
-      update();
-      element.addEventListener("scroll", update, { passive: true });
-      window.addEventListener("resize", update);
-
-      // Card count changes (or a late-loading photo) alter the rail width.
-      let observer;
-      if ("ResizeObserver" in window) {
-         observer = new ResizeObserver(update);
-         observer.observe(element);
-         for (const child of element.children) observer.observe(child);
-      }
-
-      return () => {
-         element.removeEventListener("scroll", update);
-         window.removeEventListener("resize", update);
-         observer?.disconnect();
-      };
-   }, [track]);
-
-   return edges;
+// Flags the element once it scrolls into view, which triggers the CSS reveal.
+function useInView(threshold = 0.2) {
+  const ref = useRef(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    if (prefersReducedMotion() || !("IntersectionObserver" in window)) {
+      setInView(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          observer.disconnect();
+        }
+      },
+      { threshold, rootMargin: "0px 0px -8% 0px" }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return [ref, inView];
 }
 
-function FadeIn({ children }) {
-   const element = useRef(null);
-   const [visible, setVisible] = useState(
-      () =>
-         typeof window !== "undefined" &&
-         window.matchMedia("(prefers-reduced-motion: reduce)").matches,
-   );
-   useEffect(() => {
-      if (visible || !element.current || !("IntersectionObserver" in window)) {
-         setVisible(true);
-         return undefined;
-      }
-      const observer = new IntersectionObserver(
-         ([entry]) => {
-            if (entry.isIntersecting) {
-               setVisible(true);
-               observer.disconnect();
-            }
-         },
-         { threshold: 0.12 },
-      );
-      observer.observe(element.current);
-      return () => observer.disconnect();
-   }, [visible]);
-   return (
-      <div
-         ref={element}
-         className={`transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] motion-reduce:transition-none ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-[14px]"
-            }`}
-      >
-         {children}
-      </div>
-   );
+function Reveal({ as = "div", delay = 0, className = "", children, ...rest }) {
+  const Tag = as;
+  const [ref, inView] = useInView();
+  return (
+    <Tag
+      ref={ref}
+      className={`summit-reveal${inView ? " is-visible" : ""} ${className}`}
+      style={{ "--reveal-delay": `${delay}ms` }}
+      {...rest}
+    >
+      {children}
+    </Tag>
+  );
 }
 
-function SpeakerCard({ speaker }) {
-   return (
-      <article
-         className={`group flex flex-col ${speakerCardWidth} min-h-[260px] p-3.5 rounded-[22px] bg-white/[.16] text-left ${fade} hover:-translate-y-1 hover:bg-white/[.5] hover:shadow-[0_12px_26px_rgba(20,18,15,.08)] motion-reduce:hover:translate-y-0 ${speaker
-            ? "border border-solid border-[#e2ded6]"
-            : "border border-dashed border-[#cfcac1]"
-            }`}
-      >
-         {speaker?.photo ? (
-            <img
-               src={speaker.photo}
-               alt={speaker.name}
-               className="w-full h-[142px] object-cover rounded-[19px]"
-            />
-         ) : (
-            <div
-               aria-hidden="true"
-               className="relative grid place-items-center w-[128px] h-[128px] rounded-full border border-dashed border-[#d5d0c7] bg-white/[.3] mx-auto mb-[13px] text-[33px] text-[#77736d]"
-            >
-               <FaUser className="text-[50px] opacity-30" />
-               <FaQuestion className="absolute text-[24px]" />
-            </div>
-         )}
-         <strong className="mt-2 text-[16px] leading-[1.25]">
-            {speaker?.name || (
-               <>
-                  Speaker to be
-                  <br />
-                  announced
-               </>
-            )}
-         </strong>
-         <span className="mt-[7px] text-[13px] text-[#514e49]">
-            {speaker?.role || "Stay tuned"}
-         </span>
-      </article>
-   );
+function CountUp({ value, prefix = "", suffix = "", duration = 1600 }) {
+  const [ref, inView] = useInView(0.5);
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (!inView) return undefined;
+    if (prefersReducedMotion()) {
+      setDisplay(value);
+      return undefined;
+    }
+    let frame;
+    const start = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / duration);
+      setDisplay(Math.round(value * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [inView, value, duration]);
+  return (
+    <span ref={ref} className="tabular-nums">
+      {prefix}
+      {display.toLocaleString("en-US")}
+      {suffix}
+    </span>
+  );
+}
+
+function SectionLabel({ index, children, tone = "dark" }) {
+  return (
+    <Reveal
+      className={`flex items-center gap-3 text-[12px] font-medium uppercase tracking-[0.16em] ${
+        tone === "dark" ? "text-[#8e8e95]" : "text-[#6a6a62]"
+      }`}
+    >
+      <span className="font-mono">{index}</span>
+      <span
+        className={`summit-label-line h-px w-8 ${tone === "dark" ? "bg-[#3ddc84]" : "bg-[#157a45]"}`}
+      />
+      <span>{children}</span>
+    </Reveal>
+  );
+}
+
+function ArrowButton({ href, children, variant = "solid" }) {
+  const base =
+    "group inline-flex h-12 flex-none items-center gap-2 rounded-full px-7 text-sm no-underline transition-all duration-300";
+  const styles =
+    variant === "solid"
+      ? "summit-btn-solid bg-white font-semibold text-black hover:bg-[#e8e8ed] hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(255,255,255,0.16)]"
+      : "border border-white/[0.16] font-medium text-white hover:border-white/50 hover:bg-white/[0.06] hover:-translate-y-px";
+  return (
+    <a href={href} className={`${base} ${styles}`}>
+      {children}
+      {variant === "solid" && (
+        <FaArrowRight className="text-[11px] transition-transform duration-300 group-hover:translate-x-1" />
+      )}
+    </a>
+  );
 }
 
 export default function SummitSection() {
-   const countdown = useCountdown(SUMMIT_DATE);
-   const speakerTrack = useRef(null);
-   const edges = useCarouselEdges(speakerTrack);
+  const countdown = useCountdown(SUMMIT_DATE);
+  const [openFaq, setOpenFaq] = useState(0);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const railRef = useRef(null);
 
-   const scrollSpeakers = (direction) => {
-      const element = speakerTrack.current;
-      if (!element) return;
-      // Honour the OS reduced-motion setting instead of force-animating.
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      element.scrollBy({
-         left: direction * 250,
-         behavior: reduced ? "auto" : "smooth",
-      });
-   };
+  const scrollRail = (dir) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    rail.scrollBy({ left: dir * Math.min(rail.clientWidth * 0.8, 360), behavior: "smooth" });
+  };
 
-   return (
-      <section
-         id="summit-showcase"
-         aria-labelledby="summit-showcase-title"
-         className="relative isolate overflow-hidden px-6 pt-[58px] pb-12 text-[#111] [font-family:'DM_Sans',sans-serif] bg-[radial-gradient(ellipse_at_50%_18%,rgba(255,253,248,.95),transparent_48%),radial-gradient(ellipse_at_0%_55%,rgba(228,219,205,.38),transparent_31%),radial-gradient(ellipse_at_100%_30%,rgba(228,219,205,.28),transparent_34%),#f7f4ef]"
-      >
-         <div
-            aria-hidden="true"
-            className="absolute -z-10 w-[520px] h-[520px] rounded-full bg-[rgba(224,215,201,.18)] blur-[28px] left-[-330px] bottom-[-300px]"
-         />
-         <div className="w-[min(100%,1020px)] mx-auto text-center">
-            <FadeIn>
-               <div className="mb-11">
-                  <span
-                     className={`inline-block rounded-full bg-[#ece8df] px-[15px] py-[6px] ${eyebrow}`}
-                  >
-                     Upcoming Summit Theme
+  return (
+    <div id="events" className="summit w-full [font-family:'DM_Sans',sans-serif]">
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-[#030a22] text-white border-t border-white/[0.08]">
+        <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 sm:pt-24 sm:pb-16 lg:pt-32 lg:pb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          <div className="lg:col-span-7 max-w-[720px]">
+            <Reveal
+              as="p"
+              className="m-0 mb-6 text-[12px] font-medium uppercase tracking-[0.18em] text-[#8e8e95]"
+            >
+              Eureses Creative Summit 2026 <span className="mx-2 text-white/30">/</span> Second edition
+            </Reveal>
+
+            <h2 className="m-0 mb-6 text-[40px] sm:text-[56px] lg:text-[68px] font-medium leading-[1.02] tracking-[-0.045em]">
+              <Reveal as="span" delay={80} className="summit-line-mask">
+                <span className="summit-line">The Next Wave of</span>
+              </Reveal>
+              <Reveal as="span" delay={200} className="summit-line-mask">
+                <span className="summit-line summit-shimmer">Global Innovation</span>
+              </Reveal>
+            </h2>
+
+            <Reveal
+              as="p"
+              delay={340}
+              className="m-0 mb-10 max-w-[560px] text-base sm:text-lg leading-relaxed text-[#a1a1a8]"
+            >
+              A one-day summit bringing together students, lecturers, engineers, and founders from
+              FUOYE, ABUAD, and EKSU to look closely at how important technologies are built,
+              funded, and scaled.
+            </Reveal>
+
+            <Reveal delay={460} className="flex flex-wrap items-center gap-3 mb-12">
+              <ArrowButton href="/register">Register for free</ArrowButton>
+              <ArrowButton href="#programme" variant="ghost">
+                View programme
+              </ArrowButton>
+            </Reveal>
+
+            <Reveal delay={580} className="flex items-center gap-5" aria-label="Time until doors open">
+              <span className="text-[12px] uppercase tracking-[0.14em] text-[#8e8e95]">
+                Doors open in
+              </span>
+              <div className="flex items-baseline gap-4 font-mono text-white">
+                {countdown.map((value, i) => (
+                  <span key={i} className="flex items-baseline gap-1">
+                    <span className="summit-digit-window text-xl sm:text-2xl tabular-nums">
+                      <span key={value} className="summit-digit">
+                        {value}
+                      </span>
+                    </span>
+                    <span className="text-[11px] text-[#8e8e95]">{["d", "h", "m", "s"][i]}</span>
                   </span>
-                  <h2
-                     id="summit-showcase-title"
-                     className="mx-auto mt-[15px] mb-3 max-w-[650px] text-[clamp(36px,6vw,54px)] leading-[0.98] tracking-[-.06em]"
-                  >
-                     The Next Wave of
-                     <br />
-                     Global Innovation
-                  </h2>
-                  <p className="mx-auto mb-[23px] text-[15px] leading-[1.6] text-[#514e49]">
-                     Real people. Bold ideas. Practical solutions for a smarter
-                     tomorrow.
-                  </p>
-                  <p className={`${eyebrow} mb-[9px]`}>Who It's For</p>
-                  <div className="flex flex-wrap justify-center gap-2 mb-[23px]">
-                     {audiences.map((item) => (
-                        <span key={item} className={chip}>
-                           {item}
-                        </span>
-                     ))}
-                  </div>
-                  <p className={`${eyebrow} mb-[9px]`}>Summit date</p>
-                  <div className="flex flex-wrap justify-center items-center gap-[15px]">
-                     <div
-                        aria-label={`Countdown: ${countdown.join(":")}`}
-                        className="grid grid-cols-[repeat(4,minmax(64px,1fr))] w-[min(100%,455px)] py-[9px] px-[6px] rounded-[16px] border border-[#e0dcd4] bg-white/[.14]"
-                     >
-                        {countdown.map((value, index) => (
-                           <div
-                              key={index}
-                              className={
-                                 index < 3 ? "border-r border-[#e0dcd4]" : undefined
-                              }
-                           >
-                              <strong
-                                 // Remounting on change replays the tick on the
-                                 // seconds cell only; the rest stay steady.
-                                 key={index === 3 ? value : index}
-                                 className={`block text-[21px] leading-[1.2] ${index === 3 ? tick : ""
-                                    }`}
-                              >
-                                 {value}
-                              </strong>
-                              <span className="text-[11px] uppercase text-[#514e49]">
-                                 {["Days", "Hrs", "Mins", "Sec"][index]}
-                              </span>
-                           </div>
-                        ))}
-                     </div>
-                     <br className="w-full md:hidden" />
-                     <span className="text-[12px] text-[#514e49]">
-                        (All times are in GMT)
-                     </span>
-                  </div>
-                  <div className="mt-[23px]">
-<a
-                         href="/register"
-                         className={`${cta} gap-[11px] px-[23px] py-[13px] text-[13px] !bg-black`}
-                      >
-                        Register Interest <FaArrowRight aria-hidden="true" className={arrowNudge} />
-                     </a>
-                  </div>
-               </div>
-            </FadeIn>
+                ))}
+              </div>
+            </Reveal>
+          </div>
 
-            <FadeIn>
-               <div className="mx-auto mb-[34px]">
-                  <p className={`${eyebrow} mb-[7px]`}>Speakers</p>
-                  <h3 className="m-0 mb-[18px] text-[clamp(22px,3vw,29px)] tracking-[-.04em]">
-                     Voices shaping the next wave
-                  </h3>
-                  <div className="flex items-center gap-3">
-                     <button
-                        type="button"
-                        onClick={() => scrollSpeakers(-1)}
-                        disabled={!edges.scrollable || edges.atStart}
-                        aria-label="Previous speakers"
-                        className={chipButton}
-                     >
-                        <FaArrowLeft />
-                     </button>
-                     <div
-                        ref={speakerTrack}
-                        // A scroll container needs to be focusable and named so
-                        // the rail is reachable and operable from the keyboard —
-                        // but only while there is actually something to scroll.
-                        tabIndex={edges.scrollable ? 0 : -1}
-                        role="region"
-                        aria-label="Speaker lineup"
-                        className={`flex flex-1 gap-4 overflow-x-auto snap-x snap-mandatory p-[1px_0_5px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden motion-reduce:scroll-auto ${focusRing} ${edges.scrollable ? "cursor-grab active:cursor-grabbing" : ""
-                           }`}
-                     >
-                        {Array.from({ length: 4 }, (_, index) => (
-                           <div
-                              key={speakers[index]?.name || `announcement-${index}`}
-                              className="snap-center"
-                           >
-                              <SpeakerCard speaker={speakers[index]} />
-                           </div>
-                        ))}
-                     </div>
-                     <button
-                        type="button"
-                        onClick={() => scrollSpeakers(1)}
-                        disabled={!edges.scrollable || edges.atEnd}
-                        aria-label="Next speakers"
-                        className={chipButton}
-                     >
-                        <FaArrowRight />
-                     </button>
-                  </div>
-               </div>
-            </FadeIn>
+          <div className="relative lg:col-span-5">
+            {/* Earth in the bottom-right corner, its top curve passing behind the numbers */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-[84%] top-[calc(50%+150px)] aspect-square sm:top-[calc(50%+250px)] lg:top-[calc(50%+295px)] w-[340px] -translate-x-1/2 -translate-y-1/2 sm:w-[560px] lg:w-[720px]"
+            >
+              <div className="summit-earth h-full w-full overflow-hidden rounded-full opacity-45 blur-[3px]">
+                <img
+                  src="/assets/summit-earth.webp"
+                  alt=""
+                  className="absolute max-w-none"
+                  style={{ width: "214.8%", left: "-57.26%", top: "-3.87%" }}
+                />
+              </div>
+            </div>
 
-            <FadeIn>
-               <div className="mx-auto mb-6">
-                  <p className={`${eyebrow} mb-[7px]`}>What to expect</p>
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] gap-[15px]">
-                     {expectations.map((item) => {
-                        const Icon = item.Icon;
-                        return (
-                           <article
-                              key={item.title}
-                              className={`group px-[15px] py-6 min-h-[320px] border-r border-[#e1ddd5] rounded-[10px] ${fade} hover:bg-white/[.32] bg-cover bg-center bg-no-repeat flex flex-col justify-end item-start text left`}
-                              style={{
-                                 backgroundImage: `url(${item.image})`,
-                                 backgroundPosition: 'center',
-                                 backgroundSize: 'cover',
-                              }}
-                           >
-                              <Icon aria-hidden="true" className={`mb-[7px] text-[22px] ${iconNudge}`} />
-                              <h4 className="m-0 mb-1 text-[14px] text-[#fff]">{item.title}</h4>
-                              <p className="m-0 text-[13px] leading-[1.5] text-[#fff]">
-                                 {item.description}
-                              </p>
-                           </article>
-                        );
-                     })}
-                  </div>
-               </div>
-            </FadeIn>
+          <dl className="relative z-10 m-0 grid grid-cols-3 gap-x-4 sm:gap-x-8">
+            {stats.map((stat, i) => (
+              <Reveal key={stat.label} delay={300 + i * 110} className="summit-stat pt-4">
+                <dt className="sr-only">{stat.label}</dt>
+                <dd className="m-0 text-[26px] sm:text-4xl lg:text-[40px] font-medium tracking-[-0.04em] leading-none">
+                  <CountUp value={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
+                </dd>
+                <dd className="m-0 mt-2 text-[12px] sm:text-[13px] leading-snug text-[#c3c9d8]">{stat.label}</dd>
+              </Reveal>
+            ))}
+          </dl>
+          </div>
+          </div>
 
-            <FadeIn>
-               <div className="mb-[18px]">
-                  <p className={`${eyebrow} mb-[7px]`}>Venue &amp; format</p>
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] px-4 py-[11px] rounded-[15px] border border-[#e0dcd4] bg-white/[.14] text-left">
-                     {[
-                        [FaCalendarAlt, "Format", "Physical"],
-                        [FaMapMarkerAlt, "Location", "Details coming soon"],
-                        [FaClock, "More info", "Details coming soon"],
-                     ].map(([glyph, name, value]) => {
-                        const Icon = glyph;
-                        return (
-                           <div
-                              key={name}
-                              className={`group flex items-center gap-[14px] px-3 py-1 border-r border-[#e0dcd4] rounded-[9px] ${fade} hover:bg-white/[.5]`}
-                           >
-                              <Icon
-                                 aria-hidden="true"
-                                 className={`text-[18px] ${iconNudge}`}
-                              />
-                              <span className="text-[12px] text-[#514e49]">
-                                 {name}
-                                 <br />
-                                 <strong className="font-medium text-[#333]">{value}</strong>
-                              </span>
-                           </div>
-                        );
-                     })}
-                  </div>
-               </div>
-            </FadeIn>
-
-            <FadeIn>
-               <div className="mb-[19px]">
-                  <p className={`${eyebrow} mb-2 text-center`}>Supported by</p>
-                  <div className="marquee-viewport">
-                     <div className="marquee-track">
-                        {[0, 1].map((copy) => (
-                           <div
-                              key={copy}
-                              className="marquee-group"
-                              aria-hidden={copy === 1 ? "true" : undefined}
-                           >
-                              {supporters.map((name) => (
-                                 <div key={`${copy}-${name}`} className="marquee-logo">
-                                    <FaUser aria-hidden="true" />
-                                    <span>{name}</span>
-                                 </div>
-                              ))}
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-
-               </div>
-            </FadeIn>
-            <FadeIn>
-               <div className="flex flex-wrap items-center justify-center gap-4">
-                  <a
-                     href="/register"
-                     className={`${ctaBase} gap-[11px] px-[19px] py-[11px] text-[12px]`}
-                  >
-                     Register Interest <FaArrowRight aria-hidden="true" className={arrowNudge} />
-                  </a>
-                  <a
-                     href="mailto:hello@eureses.com"
-                     className={`no-underline text-[12px] text-[#282622] rounded-[4px] hover:text-[#000] hover:underline ${focusRing} ${fade}`}
-                  >
-                     Want to speak? Get in touch
-                  </a>
-               </div>
-            </FadeIn>
-         </div>
+          <dl className="summit-facts m-0 mt-10 sm:mt-14 grid grid-cols-2 lg:max-w-[640px]">
+            {keyFacts.map((fact, i) => (
+              <Reveal
+                key={fact.label}
+                delay={680 + i * 90}
+                className={`pt-4 pb-1 pr-4 sm:pt-6 sm:pr-6 ${i > 0 ? "lg:pl-6 lg:border-l lg:border-white/[0.12]" : ""} ${
+                  i % 2 === 1 ? "pl-4 border-l border-white/[0.12] sm:pl-6 lg:pl-6" : ""
+                } ${i > 1 ? "mt-3 lg:mt-0" : ""}`}
+              >
+                <dt className="mb-1.5 text-[10px] sm:text-[11px] font-medium uppercase tracking-[0.14em] text-[#8e8e95]">
+                  {fact.label}
+                </dt>
+                <dd className="m-0 text-[14px] sm:text-base font-medium leading-snug text-white">{fact.value}</dd>
+                <dd className="m-0 mt-0.5 text-[12px] sm:text-[13px] leading-snug text-[#8e8e95]">{fact.note}</dd>
+              </Reveal>
+            ))}
+          </dl>
+        </div>
       </section>
-   );
+
+      {/* Speakers */}
+      <section className="bg-[#030a22] text-white border-t border-white/[0.08]">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+          <SectionLabel index="01">Speakers</SectionLabel>
+          <div className="mt-6 mb-14 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <Reveal
+              as="h3"
+              delay={100}
+              className="m-0 max-w-[620px] text-3xl sm:text-[40px] font-medium leading-[1.1] tracking-[-0.035em]"
+            >
+              Voices shaping the conversation.
+            </Reveal>
+            <div className="flex items-center justify-between md:justify-end gap-5">
+              <p className="m-0 text-sm text-[#8e8e95]">Lineup to be announced.</p>
+              <div className="flex gap-2">
+                {[
+                  { dir: -1, label: "Previous speakers", icon: <FaArrowLeft className="text-[11px]" /> },
+                  { dir: 1, label: "Next speakers", icon: <FaArrowRight className="text-[11px]" /> },
+                ].map(({ dir, label, icon }) => (
+                  <button
+                    key={dir}
+                    type="button"
+                    aria-label={label}
+                    onClick={() => scrollRail(dir)}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.16] bg-transparent text-white transition-colors duration-200 hover:border-white/50 hover:bg-white/[0.06] cursor-pointer"
+                  >
+                    {icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <ul
+            ref={railRef}
+            className="m-0 p-0 list-none flex gap-4 sm:gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth scroll-pl-4 sm:scroll-pl-6 lg:scroll-pl-8 pb-2 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {speakers.map((speaker, i) => (
+              <li
+                key={i}
+                className="summit-speaker group snap-start flex-none w-[76%] sm:w-[320px] rounded-2xl border border-white/[0.1] bg-white/[0.03] p-5 transition-colors duration-300 hover:border-white/[0.25]"
+              >
+                <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-white/[0.04]">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <FaUser className="text-5xl text-white/[0.12] transition-transform duration-500 group-hover:scale-110" />
+                  </div>
+                  <span className="absolute left-3 top-3 rounded-full border border-white/[0.14] bg-[#030a22]/60 px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.12em] text-[#a1a1a8]">
+                    To be announced
+                  </span>
+                </div>
+                <h4 className="m-0 mt-4 text-lg font-medium tracking-[-0.02em]">{speaker.name}</h4>
+                <p className="m-0 mt-1 text-sm text-[#a1a1a8]">
+                  {speaker.role}
+                  {speaker.org ? `, ${speaker.org}` : ""}
+                </p>
+                <p className="m-0 mt-3 text-[13px] leading-relaxed text-[#8e8e95]">{speaker.topic}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* Overview & numbers */}
+      <section className="bg-[#030a22] text-white border-t border-white/[0.08]">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div className="lg:col-span-5">
+            <SectionLabel index="02">About the summit</SectionLabel>
+            <Reveal
+              as="h3"
+              delay={100}
+              className="m-0 mt-6 text-3xl sm:text-[40px] font-medium leading-[1.1] tracking-[-0.035em]"
+            >
+              Built for depth rather than spectacle.
+            </Reveal>
+          </div>
+          <div className="lg:col-span-6 lg:col-start-7">
+            <Reveal as="p" delay={160} className="m-0 text-base sm:text-lg leading-relaxed text-[#a1a1a8]">
+              The Eureses Creative Summit is run by Eureses Community, a branch of Eureses built to
+              give back to Nigerians. Now in its second edition, it asks students, engineers,
+              designers and other creatives to move from adopting what already exists elsewhere
+              toward originating what does not exist yet.
+            </Reveal>
+          </div>
+        </div>
+      </section>
+
+      {/* Programme */}
+      <section id="programme" className="bg-[#f4f3ec] text-[#0a0a0a] scroll-mt-20">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+          <SectionLabel index="03" tone="light">
+            Programme
+          </SectionLabel>
+          <Reveal
+            as="h3"
+            delay={100}
+            className="m-0 mt-6 mb-14 max-w-[720px] text-3xl sm:text-[40px] font-medium leading-[1.1] tracking-[-0.035em]"
+          >
+            What the day looks like.
+          </Reveal>
+
+          <ol className="m-0 p-0 list-none grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {pillars.map((pillar, i) => (
+              <Reveal
+                as="li"
+                key={pillar.title}
+                delay={i * 110}
+                className="summit-pillar rounded-[24px] bg-white p-7"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#eef0e8] font-mono text-[12px] text-[#157a45]">
+                  0{i + 1}
+                </span>
+                <h4 className="m-0 mt-6 mb-3 text-xl font-medium tracking-[-0.02em]">{pillar.title}</h4>
+                <p className="m-0 text-[15px] leading-relaxed text-[#55554e]">{pillar.description}</p>
+              </Reveal>
+            ))}
+          </ol>
+
+          <div className="mt-20 grid grid-cols-1 lg:grid-cols-12 gap-x-10">
+            <Reveal className="lg:col-span-4">
+              <h4 className="m-0 text-2xl font-medium tracking-[-0.025em]">Schedule</h4>
+              <p className="m-0 mt-3 text-[15px] leading-relaxed text-[#55554e]">
+                Saturday, 21 November 2026, from 9:00 AM WAT. The programme closes at about 1:00 PM.
+                Times may be adjusted; registered attendees will receive the final schedule by email.
+              </p>
+              <button
+                type="button"
+                onClick={() => setScheduleOpen((open) => !open)}
+                aria-expanded={scheduleOpen}
+                aria-controls="summit-schedule"
+                className="group mt-5 inline-flex items-center gap-3 border-0 bg-transparent p-0 text-sm font-medium text-[#0a0a0a] cursor-pointer [font-family:inherit]"
+              >
+                <span
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all duration-300 ${
+                    scheduleOpen
+                      ? "rotate-45 border-[#0a0a0a] bg-[#0a0a0a] text-white"
+                      : "border-black/[0.2] text-[#0a0a0a] group-hover:border-black/50"
+                  }`}
+                >
+                  <FaPlus className="text-[10px]" />
+                </span>
+                <span className="transition-colors duration-200 group-hover:text-[#157a45]">
+                  {scheduleOpen ? "Hide schedule" : "Show schedule"}
+                </span>
+              </button>
+            </Reveal>
+            <div
+              id="summit-schedule"
+              className={`summit-faq-panel mt-8 lg:mt-0 lg:col-span-8${scheduleOpen ? " is-open" : ""}`}
+            >
+              <div className="overflow-hidden">
+                <ol className="m-0 p-0 list-none space-y-3">
+                  {agenda.map((item) => (
+                    <li
+                      key={item.time}
+                      className={`flex items-start gap-4 sm:gap-6 rounded-[20px] p-5 sm:p-6 ${
+                        item.kind === "soft" ? "bg-[#eceae0]" : "bg-white"
+                      }`}
+                    >
+                      <div className="w-[84px] sm:w-[100px] flex-none">
+                        <time className="block font-mono text-[13px] font-medium text-[#157a45] tabular-nums">
+                          {item.time}
+                        </time>
+                        <span className="mt-1 block text-[12px] text-[#8a8f9c]">{item.duration}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        {item.tag && (
+                          <span className="mb-2 inline-block rounded-full bg-[#eef0e8] px-2.5 py-0.5 text-[11px] font-medium text-[#157a45]">
+                            {item.tag}
+                          </span>
+                        )}
+                        <h5 className="m-0 text-[17px] font-medium leading-snug tracking-[-0.015em]">
+                          {item.title}
+                        </h5>
+                        <p className="m-0 mt-1.5 text-sm leading-relaxed text-[#55554e]">{item.detail}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="bg-white text-[#0a0a0a]">
+        <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-4">
+            <SectionLabel index="04" tone="light">
+              FAQ
+            </SectionLabel>
+            <Reveal
+              as="h3"
+              delay={100}
+              className="m-0 mt-6 text-3xl sm:text-[40px] font-medium leading-[1.1] tracking-[-0.035em]"
+            >
+              Common questions
+            </Reveal>
+            <Reveal as="p" delay={160} className="m-0 mt-4 text-[15px] leading-relaxed text-[#55554e]">
+              Anything else? Email{" "}
+              <a href="mailto:hello@eureses.com" className="text-[#0a0a0a] underline underline-offset-4">
+                hello@eureses.com
+              </a>
+              .
+            </Reveal>
+          </div>
+
+          <div className="lg:col-span-7 lg:col-start-6 border-t border-black/[0.12]">
+            {faqs.map((faq, index) => {
+              const isOpen = openFaq === index;
+              const panelId = `summit-faq-${index}`;
+              return (
+                <Reveal key={faq.q} delay={index * 80} className="border-b border-black/[0.12]">
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    className="group w-full flex items-center justify-between gap-6 py-6 bg-transparent border-0 px-0 text-left cursor-pointer text-[#0a0a0a] [font-family:inherit]"
+                  >
+                    <span className="text-base sm:text-lg font-medium tracking-[-0.015em] transition-colors duration-200 group-hover:text-[#157a45]">
+                      {faq.q}
+                    </span>
+                    <span
+                      className={`flex h-8 w-8 flex-none items-center justify-center rounded-full border transition-all duration-300 ${
+                        isOpen
+                          ? "rotate-45 bg-[#0a0a0a] border-[#0a0a0a] text-white"
+                          : "border-black/[0.12] text-[#6a6a62] group-hover:border-black/40"
+                      }`}
+                    >
+                      <FaPlus className="text-[10px]" />
+                    </span>
+                  </button>
+                  <div id={panelId} className={`summit-faq-panel${isOpen ? " is-open" : ""}`}>
+                    <div className="overflow-hidden">
+                      <p className="m-0 pb-6 pr-10 text-[15px] leading-relaxed text-[#55554e]">{faq.a}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Registration CTA */}
+      <section className="relative overflow-hidden bg-[#030a22] text-white border-t border-white/[0.08]">
+        <div className="summit-cta-glow absolute inset-0 pointer-events-none" aria-hidden="true" />
+        <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24 flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+          <div className="max-w-[640px]">
+            <Reveal as="h3" className="m-0 text-3xl sm:text-5xl font-medium leading-[1.05] tracking-[-0.04em]">
+              Reserve your place at the 2026 summit.
+            </Reveal>
+            <Reveal as="p" delay={120} className="m-0 mt-5 text-base sm:text-lg leading-relaxed text-[#a1a1a8]">
+              Admission is free, but seats are limited to 2,000. Once you register, your
+              admission pass is sent to you by email.
+            </Reveal>
+          </div>
+          <Reveal delay={240} className="self-start lg:self-auto">
+            <ArrowButton href="/register">Register for free</ArrowButton>
+          </Reveal>
+        </div>
+      </section>
+    </div>
+  );
 }

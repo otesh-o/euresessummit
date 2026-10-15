@@ -1,44 +1,34 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseurl = import.meta.env.VITE_SUPABASE_URL;
-const supabasekey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseurl = import.meta.env.VITE_SUPABASE_URL || "https://rloghizmxlbreuskchzd.supabase.co";
+const supabasekey = import.meta.env.VITE_SUPABASE_ANON_KEY || "dummy-anon-key";
 export const supabase = createClient(supabaseurl, supabasekey);
 
-/**
- * Single seam between the UI and the (not yet existing) backend.
- *
- * Every export is an async function that resolves plain data and never
- * throws for an expected failure — business errors come back as
- * `{ ok: false, error }`. Callers therefore stay identical whether the body
- * below is a mock or a real request:
- *
- *   // mock (now)                      // real (later)
- *   await adminLogin(password)        await request("/api/admin/login", {...})
- *   return { ok: true, token }        return parse(await request(...))
- *
- * To go live, replace each `mockBody` with a fetch() and keep the exported
- * signature, the arguments and the resolved shape exactly as they are here.
- * Nothing outside this file needs to change.
- */
+const PASSWORD = import.meta.env.VITE_PASSWORD || "admin";
+export const AUTH_TOKEN_KEY = import.meta.env.VITE_AUTH_TOKEN || "ec-admin-token";
 
-const PASSWORD = import.meta.env.VITE_PASSWORD;
+const isValid = (value) => typeof value === "string" && value.trim().length > 0;
 
-export const AUTH_TOKEN_KEY = import.meta.env.VITE_AUTH_TOKEN;
-
-const isFailed = (value) => typeof value === "string" && value.trim().length > 0;
-
-/** @returns {Promise<{ok: true, serial: string, duplicate?: boolean} | {ok: false, error: string}>} */
+/** @returns {Promise<{ok: true, success: true, serial: string, duplicate?: boolean, emailSent?: boolean} | {ok: false, success: false, error: string}>} */
 export async function registerParticipant({
   name,
   email,
   phone,
-  role,
-  profession,
+  role = "Attendee",
+  profession = "",
+  is_student = false,
+  institution = "",
+  level = "",
+  department = "",
+  skill_interest = "",
+  startup_idea = "",
+  needs_transport = false,
 } = {}) {
-  if (![name, email, phone, role, profession].every(isFailed)) {
+  if (!name || !name.trim() || !email || !email.trim() || !phone || !phone.trim()) {
     return {
       ok: false,
-      error: "All fields are required to be filled before submitting the form."
+      success: false,
+      error: "Please fill in your name, email, and phone number."
     };
   }
 
@@ -53,48 +43,81 @@ export async function registerParticipant({
   if (existing) {
     return {
       ok: true,
+      success: true,
       serial: existing.serial,
       duplicate: true,
+      emailSent: true,
     };
   }
 
+  // Build composite profession string for rich dashboard details
+  // "[Student]" is the marker the admin dashboard counts students by.
+  const compositeParts = [
+    is_student ? "[Student]" : null,
+    profession.trim(),
+    institution.trim(),
+    level.trim(),
+    department.trim() ? `Dept: ${department.trim()}` : null,
+    skill_interest.trim() ? `Interest: ${skill_interest.trim()}` : null,
+    startup_idea.trim() ? `Idea/Startup: ${startup_idea.trim()}` : null,
+    needs_transport ? "[Needs Oye Bus Transport]" : null,
+  ].filter(Boolean);
+
+  const compositeProfession = compositeParts.join(" • ") || profession.trim() || "Student / Builder";
+
+  const insertPayload = {
+    name: name.trim(),
+    email: cleanEmail,
+    phone: phone.trim(),
+    role: (role || "Attendee").toLowerCase(),
+    profession: compositeProfession,
+  };
+
   const { data, error } = await supabase
     .from("participants")
-    .insert({
-      name: name.trim(),
-      email: cleanEmail,
-      phone: phone.trim(),
-      role: role.toLowerCase(),
-      profession: profession.trim(),
-    })
+    .insert(insertPayload)
     .select("serial")
     .single();
 
   if (error) {
     return {
       ok: false,
-      error: "We couldn't reach the server. Please check your internet connection and try again."
-    }
+      success: false,
+      error: "We couldn't record your registration. Please check your connection and try again."
+    };
+  }
+
+  // Attempt to trigger the email edge function in background
+  let emailSent = false;
+  try {
+    const { error: fnErr } = await supabase.functions.invoke("send-serial-email", {
+      body: { name: name.trim(), email: cleanEmail, serial: data.serial },
+    });
+    if (!fnErr) emailSent = true;
+  } catch (emailErr) {
+    console.warn("Could not send confirmation email:", emailErr);
   }
 
   return {
     ok: true,
-    serial: data.serial
+    success: true,
+    serial: data.serial,
+    emailSent,
   };
 }
 
 /** @returns {Promise<{ok: true, token: string} | {ok: false, error: string}>} */
 export async function adminLogin(password) {
-  if (password === PASSWORD) {
+  if (password && password === PASSWORD) {
     return {
       ok: true,
-      token: "AUTH_TOKEN_KEY"
+      token: AUTH_TOKEN_KEY
     };
   }
   return {
     ok: false,
     error: "Incorrect password. Please try again."
-  }
+  };
 }
 
 /** @returns {Promise<Array<{id, serial, name, role, profession, phone, present}>>} */
@@ -123,7 +146,7 @@ export async function checkInParticipant(query) {
   if (!needle) {
     return {
       ok: false,
-      error: "No match Found"
+      error: "No match found."
     };
   }
 
@@ -136,26 +159,26 @@ export async function checkInParticipant(query) {
   if (error || !data) {
     return {
       ok: false,
-      error: "No match found"
-    }
+      error: "No match found."
+    };
   }
 
-  const { error: updtaeError } = await supabase
+  const { error: updateError } = await supabase
     .from("participants")
     .update({ present: true })
     .eq("id", data.id);
 
-  if (updtaeError) {
+  if (updateError) {
     return {
       ok: false,
       error: "Failed to check in participant. Please try again."
-    }
+    };
   }
 
   return {
     ok: true,
     message: "Participant checked in successfully."
-  }
+  };
 }
 
 /** @returns {Promise<{ok: true} | {ok: false, error: string}>} */
@@ -169,12 +192,12 @@ export async function setParticipantPresent(id, present) {
     return {
       ok: false,
       error: "Failed to update participant status. Please try again."
-    }
+    };
   }
 
   return {
     ok: true
-  }
+  };
 }
 
 export async function deleteParticipant(id) {
@@ -188,7 +211,7 @@ export async function deleteParticipant(id) {
     return {
       ok: false,
       error: "Failed to delete participant. Please try again."
-    }
+    };
   }
 
   const count = data?.length ?? 0;
@@ -196,6 +219,10 @@ export async function deleteParticipant(id) {
     return {
       ok: false,
       error: "No participant found with the given ID."
-    }
+    };
   }
+
+  return {
+    ok: true
+  };
 }
