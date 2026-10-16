@@ -20,7 +20,7 @@ export default function AnimatedStatement({ text }) {
           observer.disconnect();
         }
       },
-      { threshold: 0.35 }
+      { threshold: 0.5, rootMargin: "0px 0px -12% 0px" }
     );
     observer.observe(node);
     return () => observer.disconnect();

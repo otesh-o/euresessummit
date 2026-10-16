@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaArrowLeft, FaArrowRight, FaPlus, FaUser } from "react-icons/fa";
+import { REGISTRATION_OPEN, lockedLinkProps } from "../lib/config";
 
 // Doors open 9:00 AM WAT (UTC+1).
 const SUMMIT_DATE = "2026-11-21T09:00:00+01:00";
@@ -11,7 +12,6 @@ const keyFacts = [
 
 const stats = [
   { value: 2000, suffix: "+", label: "Seats in 2026" },
-  { value: 400, suffix: "+", label: "Attendees in 2025" },
   { value: 3, label: "Universities" },
 ];
 
@@ -121,12 +121,8 @@ const faqs = [
     a: "Yes. Admission is free for students, lecturers, and invited guests. Register online to receive your personal admission pass with a QR code for check-in.",
   },
   {
-    q: "Is there transport from the FUOYE Oye campus?",
-    a: "Yes. Chartered shuttle buses run from the FUOYE Oye main campus to the Florence Bamitale Owolabi Civic Center in Ikole in the morning and return after the event. Select the shuttle option when you register so we can plan capacity.",
-  },
-  {
-    q: "Are first-years and non-engineers welcome?",
-    a: "Yes. The programme is designed for anyone interested in technology, whether you are a first-year student, a designer, a researcher, a content creator, or an aspiring founder.",
+    q: "Is it just for tech people and engineers?",
+    a: "No. The summit is for creatives in general: content creators, designers, video creators, writers, researchers, and anyone building something new, alongside software and hardware engineers. First-years are welcome too. If you make things, or want to, there is a place for you.",
   },
   {
     q: "How does the panel work?",
@@ -244,6 +240,7 @@ function SectionLabel({ index, children, tone = "dark" }) {
 }
 
 function ArrowButton({ href, children, variant = "solid" }) {
+  const locked = href === "/register" && !REGISTRATION_OPEN;
   const base =
     "group inline-flex h-12 flex-none items-center gap-2 rounded-full px-7 text-sm no-underline transition-all duration-300";
   const styles =
@@ -251,7 +248,11 @@ function ArrowButton({ href, children, variant = "solid" }) {
       ? "summit-btn-solid bg-white font-semibold text-black hover:bg-[#e8e8ed] hover:-translate-y-px hover:shadow-[0_8px_24px_rgba(255,255,255,0.16)]"
       : "border border-white/[0.16] font-medium text-white hover:border-white/50 hover:bg-white/[0.06] hover:-translate-y-px";
   return (
-    <a href={href} className={`${base} ${styles}`}>
+    <a
+      href={href}
+      className={`${base} ${styles}${locked ? " link-disabled" : ""}`}
+      {...(locked ? lockedLinkProps : {})}
+    >
       {children}
       {variant === "solid" && (
         <FaArrowRight className="text-[11px] transition-transform duration-300 group-hover:translate-x-1" />
@@ -276,6 +277,30 @@ export default function SummitSection() {
     <div id="events" className="summit w-full [font-family:'DM_Sans',sans-serif]">
       {/* Hero */}
       <section className="relative overflow-hidden bg-[#030a22] text-white border-t border-white/[0.08]">
+        {/* City skyline along the bottom, shifted left so the bridge stays clear of the Earth */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden">
+          <img
+            src="/assets/summit-skyline.webp"
+            alt=""
+            className="-ml-[34%] block h-auto w-[100%] max-w-none opacity-[0.2] blur-[2.5px] invert lg:opacity-[0.24]"
+          />
+        </div>
+
+        {/* Upper half of the Earth rising from the bottom edge of the hero */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute bottom-0 left-[78%] aspect-square w-[380px] -translate-x-1/2 translate-y-1/2 sm:left-[82%] sm:w-[540px] lg:left-[84%] lg:w-[720px]"
+        >
+          <div className="summit-earth h-full w-full overflow-hidden rounded-full opacity-45 blur-[3px] shadow-[0_0_140px_rgba(61,220,132,0.12)]">
+            <img
+              src="/assets/summit-earth.webp"
+              alt=""
+              className="absolute max-w-none"
+              style={{ width: "214.8%", left: "-57.26%", top: "-3.87%" }}
+            />
+          </div>
+        </div>
+
         <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-10 sm:pt-24 sm:pb-16 lg:pt-32 lg:pb-20">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           <div className="lg:col-span-7 max-w-[720px]">
@@ -332,22 +357,7 @@ export default function SummitSection() {
           </div>
 
           <div className="relative lg:col-span-5">
-            {/* Earth in the bottom-right corner, its top curve passing behind the numbers */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute left-[84%] top-[calc(50%+150px)] aspect-square sm:top-[calc(50%+250px)] lg:top-[calc(50%+295px)] w-[340px] -translate-x-1/2 -translate-y-1/2 sm:w-[560px] lg:w-[720px]"
-            >
-              <div className="summit-earth h-full w-full overflow-hidden rounded-full opacity-45 blur-[3px]">
-                <img
-                  src="/assets/summit-earth.webp"
-                  alt=""
-                  className="absolute max-w-none"
-                  style={{ width: "214.8%", left: "-57.26%", top: "-3.87%" }}
-                />
-              </div>
-            </div>
-
-          <dl className="relative z-10 m-0 grid grid-cols-3 gap-x-4 sm:gap-x-8">
+          <dl className="relative z-10 m-0 grid grid-cols-2 gap-x-4 sm:gap-x-8">
             {stats.map((stat, i) => (
               <Reveal key={stat.label} delay={300 + i * 110} className="summit-stat pt-4">
                 <dt className="sr-only">{stat.label}</dt>
@@ -629,6 +639,14 @@ export default function SummitSection() {
       {/* Registration CTA */}
       <section className="relative overflow-hidden bg-[#030a22] text-white border-t border-white/[0.08]">
         <div className="summit-cta-glow absolute inset-0 pointer-events-none" aria-hidden="true" />
+        {/* Skyline, barely visible */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0">
+          <img
+            src="/assets/summit-skyline.webp"
+            alt=""
+            className="block h-[200px] w-full object-cover object-[85%_100%] opacity-[0.08] blur-[3px] invert sm:h-[300px] lg:h-[380px]"
+          />
+        </div>
         <div className="relative max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-24 flex flex-col lg:flex-row lg:items-end justify-between gap-10">
           <div className="max-w-[640px]">
             <Reveal as="h3" className="m-0 text-3xl sm:text-5xl font-medium leading-[1.05] tracking-[-0.04em]">

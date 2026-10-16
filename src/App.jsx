@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FaArrowRight, FaBars, FaTimes, FaWhatsapp } from "react-icons/fa";
 import AnimatedStatement from "./components/AnimatedStatement";
 import SummitSection from "./components/SummitSection";
+import { JOIN_OPEN, REGISTRATION_OPEN, lockedLinkProps } from "./lib/config";
 
 import "./App.css";
 
@@ -123,7 +124,8 @@ function App() {
               href={joinUrl}
               target="_blank"
               rel="noreferrer"
-              className="join-chip"
+              className={`join-chip${JOIN_OPEN ? "" : " link-disabled"}`}
+              {...(JOIN_OPEN ? {} : lockedLinkProps)}
             >
               Join Community
             </a>
@@ -155,8 +157,9 @@ function App() {
             href={joinUrl}
             target="_blank"
             rel="noreferrer"
-            className="mobile-join"
+            className={`mobile-join${JOIN_OPEN ? "" : " link-disabled"}`}
             onClick={closeMenu}
+            {...(JOIN_OPEN ? {} : lockedLinkProps)}
           >
             <FaWhatsapp />
             Join the Community
@@ -179,13 +182,18 @@ function App() {
                 href={joinUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="button-join"
+                className={`button-join${JOIN_OPEN ? "" : " link-disabled"}`}
+                {...(JOIN_OPEN ? {} : lockedLinkProps)}
               >
                 <FaWhatsapp />
                 Join the Community
               </a>
 
-              <a href="/register" className="button-secondary">
+              <a
+                href="/register"
+                className={`button-secondary${REGISTRATION_OPEN ? "" : " link-disabled"}`}
+                {...(REGISTRATION_OPEN ? {} : lockedLinkProps)}
+              >
                 Register for Eureses Creative Summit
                 <FaArrowRight />
               </a>
@@ -260,7 +268,13 @@ function App() {
 
             <div>
               <h4>Connect</h4>
-              <a href={joinUrl} target="_blank" rel="noreferrer">
+              <a
+                href={joinUrl}
+                target="_blank"
+                rel="noreferrer"
+                className={JOIN_OPEN ? "" : "link-disabled"}
+                {...(JOIN_OPEN ? {} : lockedLinkProps)}
+              >
                 Join the Community
               </a>
               <a href="mailto:hello@eureses.com">hello@eureses.com</a>
